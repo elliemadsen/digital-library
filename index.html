@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Ellie Madsen</title>
+    <meta
+      charset="UTF-8"
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <link rel="stylesheet" href="/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>📖</text></svg>"
+    />
+  </head>
+
+  <body style="margin: 0; overflow: hidden; height: 100vh">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-section" style="justify-content: flex-start">
+        <div class="btn-toggle-group" id="mode-toggle-group">
+          <button class="btn-toggle active" id="btn-3d">3D</button>
+          <button class="btn-toggle" id="btn-2d">2D</button>
+          <button class="btn-toggle" id="btn-list">List</button>
+        </div>
+      </div>
+      <div class="top-section" id="embedding-section">
+        <div class="btn-toggle-group" id="embedding-toggle-group">
+          <button class="btn-toggle active" id="btn-tsne">TSNE</button>
+          <button class="btn-toggle" id="btn-umap">UMAP</button>
+        </div>
+      </div>
+      <div class="top-section" id="filter-sort-section">
+        <label for="sort-select" id="sort-label">Sort by</label>
+        <select id="sort-select" class="form-control"></select>
+        <label for="shelf-select" id="shelf-label">Filter by</label>
+        <select id="shelf-select" class="form-control"></select>
+      </div>
+      <div class="top-section" style="justify-content: flex-end">
+        <button class="btn-toggle" id="btn-info">i</button>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div id="embeddingChart" class="chart"></div>
+    <div id="threeChart" class="chart"></div>
+    <div
+      id="book-container"
+      class="chart list-view d-flex flex-wrap wide-flex justify-content-start align-items-start"
+    ></div>
+
+    <!-- Info Popup -->
+    <div id="infoPopup" class="popup-overlay" style="display: none">
+      <div class="popup-content">
+        <button class="close-btn">&times;</button>
+        <div class="popup-body">
+          <p>
+            This digital library is an interactive platform for exploring a
+            collection of books using semantic embedding and visualization
+            techniques. Traditional methods of linearly organizing books by
+            author or topic are rigid and do not align with cognitive processes
+            of associative thinking. This library leverages dimensionality
+            reduction to create a dynamic and intuitive browsing experience
+            based on semantic similarity.
+          </p>
+          <p>Users can view the library in three modes:</p>
+          <ul>
+            <li>
+              <strong>3D</strong> Books are arranged in a three-dimensional
+              semantic space with interactive camera navigation, rotation, and
+              zooming.
+            </li>
+            <li>
+              <strong>2D</strong> Books are arranged in a two-dimensional
+              scatterplot based on their semantic similarity with interactive
+              zooming and panning.
+            </li>
+            <li>
+              <strong>List</strong> Books are presented in a sortable and
+              filterable list format.
+            </li>
+          </ul>
+          <p>
+            The positions of books in the 2D and 3D views are determined by
+            embeddings generated from book descriptions and metadata using the
+            Sentence Transformers model
+            <a
+              href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2"
+              target="_blank"
+              >all-MiniLM-L6-v2</a
+            >. Dimensionality reduction is performed using either
+            <a
+              href="https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html"
+              target="_blank"
+              >t-SNE</a
+            >
+            (T-Distributed Stochastic Neighbor Embedding) or
+            <a
+              href="https://umap-learn.readthedocs.io/en/latest/"
+              target="_blank"
+              >UMAP</a
+            >
+            (Uniform Manifold Approximation and Projection). This approach
+            embeds meaning in the space itself. Two books that are close
+            together are semantically similar, allowing users to discover
+            related works intuitively.
+          </p>
+          <p>
+            The library contains all the books I've ever read. Book data is
+            sourced from my personal library on
+            <a
+              href="https://www.goodreads.com/review/list/20954505?shelf=read"
+              target="_blank"
+              >Goodreads</a
+            >
+            and cover images are provided by the
+            <a href="https://openlibrary.org/developers/api" target="_blank"
+              >Open Library API</a
+            >. Visualization is implemented using
+            <a href="https://d3js.org/" target="_blank">d3.js</a> and
+            <a href="https://threejs.org/">three.js</a>.
+          </p>
+          <p>
+            View the source code on
+            <a
+              href="https://github.com/elliemadsen/digital-library"
+              target="_blank"
+              >GitHub</a
+            >.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="/digital-library.js"></script>
+  </body>
+</html>
