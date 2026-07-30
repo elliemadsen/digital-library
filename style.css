@@ -1,6 +1,7 @@
 /* general */
 body {
-  font-family: "Courier New", monospace;
+  font-family: "Roboto";
+  font-weight: 300;
   color: black;
   margin: 0;
   overflow: hidden;
@@ -46,9 +47,9 @@ a {
 }
 
 .form-control {
-  font-family: "Courier New", monospace;
   background-color: #f0f0f0;
   border-radius: 5px;
+  border: 0.4px solid black;
   padding: 5px 10px;
   width: auto;
 }
@@ -69,8 +70,6 @@ a {
   position: absolute;
   top: 50px;
   left: 0;
-  border: 1px solid lightgray;
-  border-radius: 20px;
   overflow: hidden;
 }
 
@@ -97,6 +96,7 @@ a {
   padding: 0 20px;
   z-index: 20;
   justify-content: space-between;
+  border-bottom: 0.3px solid black;
 }
 
 .top-section {
@@ -128,12 +128,14 @@ a {
 .btn-toggle {
   background: #f0f0f0;
   color: #000;
-  border: none;
+  border: 0.4px solid black;
   border-radius: 5px;
   padding: 5px 10px;
   cursor: pointer;
-  font-family: "Courier New", monospace;
-  font-size: 1rem;
+  margin-right: 10px;
+  font-size: 0.9rem;
+  font-family: "Roboto";
+  font-weight: 300;
   transition: background 0.2s, color 0.2s;
 }
 
@@ -146,28 +148,12 @@ a {
   margin: 0 5px;
 }
 
-.btn-toggle {
-  margin-right: 10px;
-  padding: 5px 10px;
-  background-color: #f0f0f0;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-family: "Courier New", monospace;
-}
-
-.btn-toggle.active {
-  background-color: #000;
-  color: white;
-}
-
 .btn-info {
   padding: 5px 10px;
   background-color: #f0f0f0;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-family: "Courier New", monospace;
   color: black;
   outline: none;
   box-shadow: none;

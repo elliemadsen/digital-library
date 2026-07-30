@@ -340,26 +340,24 @@ function create3DPlot(allBooks, books) {
     }
   });
 
-  // emadsen: comment this in to add popup book details on hover in 3D plot
+  function onMouseMove(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(scene.children);
+    if (intersects.length > 0) {
+      const obj = intersects[0].object;
+      if (obj.userData.title) {
+        showBookDetails(obj.userData.title, obj.userData.author, event);
+      }
+    } else {
+      hideBookDetails();
+    }
+  }
 
-  // function onMouseMove(event) {
-  //   const rect = renderer.domElement.getBoundingClientRect();
-  //   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  //   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-  //   raycaster.setFromCamera(mouse, camera);
-  //   const intersects = raycaster.intersectObjects(scene.children);
-  //   if (intersects.length > 0) {
-  //     const obj = intersects[0].object;
-  //     if (obj.userData.title) {
-  //       showBookDetails(obj.userData.title, obj.userData.author, event);
-  //     }
-  //   } else {
-  //     hideBookDetails();
-  //   }
-  // }
-
-  // renderer.domElement.addEventListener('mousemove', onMouseMove);
-  // renderer.domElement.addEventListener('mouseleave', hideBookDetails);
+  renderer.domElement.addEventListener('mousemove', onMouseMove);
+  renderer.domElement.addEventListener('mouseleave', hideBookDetails);
 
   function animate() {
     requestAnimationFrame(animate);
