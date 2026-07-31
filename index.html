@@ -24,12 +24,6 @@
           <button class="btn-toggle" id="btn-list">List</button>
         </div>
       </div>
-      <div class="top-section" id="embedding-section">
-        <div class="btn-toggle-group" id="embedding-toggle-group">
-          <button class="btn-toggle active" id="btn-tsne">TSNE</button>
-          <button class="btn-toggle" id="btn-umap">UMAP</button>
-        </div>
-      </div>
       <div class="top-section" id="filter-sort-section">
         <label for="sort-select" id="sort-label">Sort by</label>
         <select id="sort-select" class="form-control"></select>
@@ -37,7 +31,7 @@
         <select id="shelf-select" class="form-control"></select>
       </div>
       <div class="top-section" style="justify-content: flex-end">
-        <button class="btn-toggle" id="btn-info">i</button>
+        <button class="btn-toggle" id="btn-info">?</button>
       </div>
     </div>
 
@@ -73,22 +67,15 @@
               href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2"
               target="_blank"
               >all-MiniLM-L6-v2</a
-            >. Dimensionality reduction is performed using either
-            <a
-              href="https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html"
-              target="_blank"
-              >t-SNE</a
-            >
-            (T-Distributed Stochastic Neighbor Embedding) or
+            >. Dimensionality reduction is performed using
             <a
               href="https://umap-learn.readthedocs.io/en/latest/"
               target="_blank"
               >UMAP</a
             >
-            (Uniform Manifold Approximation and Projection). This approach
-            embeds meaning in the space itself. Two books that are close
-            together are semantically similar, allowing users to intuitively
-            navigate related works in a non-linear fashion.
+            (Uniform Manifold Approximation and Projection). Two books that are
+            close together are semantically similar, allowing users to
+            intuitively navigate related works in a non-linear fashion.
           </p>
           <p>
             The library contains all the books I've ever read. Book data is

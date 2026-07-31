@@ -64,31 +64,70 @@ function loadTexture(url, callback, errorCallback) {
   }
 }
 
-let embeddingType = 'tsne'; // 'tsne' or 'umap'
+let embeddingType = 'umap';
 
-// fetch data from google sheets using cloud api key and construct CSV
+// Parse CSV text into rows of fields, handling quoted fields with embedded
+// commas, escaped quotes ("") and newlines.
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\r") {
+      // ignore, newline is handled below
+    } else if (char === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+}
+
+// Fetch book data from the local books.csv file
 function fetchCSVData() {
-  const sheetId = "1moYiL52ZN9F20QZ-uYoO91Bh3AtkJYEoNcyv6MuRI2Y";
-  const sheetRange = "Sheet1";
-  const apiKey = "AIzaSyAGQtw4Jdd-BCe6-8PIRfUeQp8lwKJurfE";
-
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`;
-
-  return fetch(url)
-    .then((response) => response.json())
-    .then((data) => {
-      const rows = data.values;
+  return fetch("books.csv")
+    .then((response) => response.text())
+    .then((text) => {
+      const rows = parseCSV(text);
       const headers = rows[0];
       return rows.slice(1).map((row) => {
         const obj = {};
         headers.forEach((header, index) => {
-          if (header.trim() === `embedding_2d_${embeddingType}`) {
+          const key = header.trim();
+          if (key === `embedding_2d_${embeddingType}`) {
             const embedding = JSON.parse(row[index] || "[0,0]");
             if (embedding.length >= 2) {
               obj["x"] = embedding[0];
               obj["y"] = embedding[1];
             }
-          } else if (header.trim() === `embedding_3d_${embeddingType}`) {
+          } else if (key === `embedding_3d_${embeddingType}`) {
             const embedding = JSON.parse(row[index] || "[0,0,0]");
             if (embedding.length >= 3) {
               obj["x3"] = embedding[0];
@@ -96,7 +135,7 @@ function fetchCSVData() {
               obj["z3"] = embedding[2];
             }
           } else {
-            obj[header.trim()] = row[index] || "";
+            obj[key] = row[index] || "";
           }
         });
         return obj;
@@ -108,26 +147,17 @@ function fetchCSVData() {
     });
 }
 
-// Parse a CSV line, handling quoted fields
-function parseCSVLine(line) {
-  const regex = /("(?:[^"]|"")*")|([^,"]+)/g;
-  const values = [];
-  let match;
-  while ((match = regex.exec(line)) !== null) {
-    values.push(match[0].replace(/(^"|"$)/g, "").replace(/""/g, '"')); // Remove surrounding quotes and handle doubled quotes
-  }
-  return values;
-}
-
 // Generate HTML for book objects (bookshelf)
 function generateBooksHTML(books) {
   return books
     .map(
       (book) => `
     <div class="book">
-        <img src="https://covers.openlibrary.org/b/isbn/${
+        <img src="covers/${
           book.isbn
-        }-L.jpg" alt="${book.title}" class="book-image">
+        }.jpg" onerror="this.onerror=null;this.src='https://covers.openlibrary.org/b/isbn/${
+          book.isbn
+        }-L.jpg';" alt="${book.title}" class="book-image">
         <div class="flex-column book-text">
             <p>${book.title}</p>
             <p>${book.author}</p>
@@ -254,15 +284,18 @@ function createScatterPlot(allBooks, books) {
 
       imageGroup
         .append("image")
-        .attr(
-          "xlink:href",
-          `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`
-        )
+        .attr("xlink:href", `covers/${book.isbn}.jpg`)
         .attr("x", normalizedX - book_width / 2)
         .attr("y", normalizedY - book_height / 2)
         .attr("width", book_width)
         .attr("height", book_height)
         .attr("alt", book.title)
+        .on("error", function () {
+          d3.select(this).on("error", null).attr(
+            "xlink:href",
+            `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`
+          );
+        })
         .on("mouseover", function () {
           d3.select(this).style("opacity", 0.7); // Hover effect
           showBookDetails(book.title, book.author);
@@ -311,8 +344,7 @@ function create3DPlot(allBooks, books) {
 
   books.forEach((book) => {
     if (book.x3 !== undefined && book.y3 !== undefined && book.z3 !== undefined) {
-      const url = `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`;
-      loadTexture(url, (texture) => {
+      const addSprite = (texture) => {
         const material = new THREE.SpriteMaterial({ map: texture });
         const sprite = new THREE.Sprite(material);
         sprite.position.set(
@@ -323,19 +355,14 @@ function create3DPlot(allBooks, books) {
         sprite.scale.set(10, 15, 1); // Adjust size
         sprite.userData = { title: book.title, author: book.author };
         scene.add(sprite);
-      }, (error) => {
-        console.error('Texture failed to load for', book.isbn, error);
-        // emadsen: comment this in to Fallback to black square
-        // const fallbackMaterial = new THREE.SpriteMaterial({ color: 0x000000 });
-        // const sprite = new THREE.Sprite(fallbackMaterial);
-        // sprite.position.set(
-        //   normalize(book.x3, minX, maxX),
-        //   normalize(book.y3, minY, maxY),
-        //   normalize(book.z3, minZ, maxZ)
-        // );
-        // sprite.scale.set(10, 15, 1);
-        // sprite.userData = { title: book.title, author: book.author };
-        // scene.add(sprite);
+      };
+      const localUrl = `covers/${book.isbn}.jpg`;
+      const remoteUrl = `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`;
+      loadTexture(localUrl, addSprite, () => {
+        // Fall back to the Open Library API for covers not yet fetched locally
+        loadTexture(remoteUrl, addSprite, (error) => {
+          console.error('Texture failed to load for', book.isbn, error);
+        });
       });
     }
   });
@@ -419,17 +446,10 @@ function switchMode(mode) {
     }
   });
   document.querySelectorAll('.chart').forEach(chart => chart.style.display = 'none');
-  // Show/hide embedding toggle and sort/filter controls based on mode
-  const embeddingSection = document.getElementById('embedding-section');
+  // Show/hide sort/filter controls based on mode
   const filterSortSection = document.getElementById('filter-sort-section');
   const sortLabel = document.getElementById('sort-label');
   const sortSelect = document.getElementById('sort-select');
-  // Embedding toggle only in 2d/3d
-  if (mode === '2d' || mode === '3d') {
-    embeddingSection.style.display = '';
-  } else {
-    embeddingSection.style.display = 'none';
-  }
   // Filter by always visible, sort by only in list
   if (mode === 'list') {
     sortLabel.style.display = '';
@@ -466,26 +486,6 @@ document.getElementById("shelf-select").addEventListener("change", (event) => {
 document.getElementById("btn-3d").addEventListener("click", () => switchMode('3d'));
 document.getElementById("btn-2d").addEventListener("click", () => switchMode('2d'));
 document.getElementById("btn-list").addEventListener("click", () => switchMode('list'));
-document.getElementById("btn-tsne").addEventListener("click", () => {
-  if (embeddingType !== 'tsne') {
-    embeddingType = 'tsne';
-    document.getElementById('btn-tsne').classList.add('active');
-    document.getElementById('btn-umap').classList.remove('active');
-    if (currentMode === '2d' || currentMode === '3d') {
-      processEvent();
-    }
-  }
-});
-document.getElementById("btn-umap").addEventListener("click", () => {
-  if (embeddingType !== 'umap') {
-    embeddingType = 'umap';
-    document.getElementById('btn-umap').classList.add('active');
-    document.getElementById('btn-tsne').classList.remove('active');
-    if (currentMode === '2d' || currentMode === '3d') {
-      processEvent();
-    }
-  }
-});
 document.getElementById("btn-info").addEventListener("click", () => {
   document.getElementById('infoPopup').style.display = 'flex';
 });
